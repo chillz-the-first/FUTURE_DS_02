@@ -4,21 +4,16 @@ def get_baseline_churn_rate(df):
     churn_counts = df["Churn"].value_counts(normalize=True)
     return churn_counts["Yes"]
 
-def get_churn_by_contract(df):
-    # contract_churn = df.groupby("Contract")["Churn"].value_counts(normalize=True).reset_index()
-    # contract_churn.columns = ["Contract", "Churn", "Churn_rate"]
-    # contract_churn["Churn_rate"] = contract_churn["Churn_rate"].map('{:.1%}'.format)
-
-    # df["Churn_binary"] = (df["Churn"] == "Yes").astype(int)
-
+def get_churn_by(df, column):
     return (
-        df.groupby("Contract").agg(
+        df.groupby(column, observed=False).agg(
             customers=("Churn_binary", "size"),
             churn_rate=("Churn_binary", "mean"),
         )
     )
 
 def get_churn_by_tenure(df):
+    df = df.copy()
     df["Tenure_Tier"] = pd.cut(
         df["tenure"],
         bins=[0, 12, 24, 48, float('inf')],
@@ -26,9 +21,8 @@ def get_churn_by_tenure(df):
         include_lowest=True,
     )
 
-    return (
-        df.groupby("Tenure_Tier", observed=False).agg(
-            customers=("Churn_binary", "size"),
-            churn_rate=("Churn_binary", "mean"),
-        )
-    )
+    return get_churn_by(df, "Tenure_Tier")
+
+
+
+
