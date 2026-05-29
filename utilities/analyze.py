@@ -28,6 +28,15 @@ def get_lost_revenue(df, column):
         )
     )
 
+def get_retention_curve(df):
+    tenure_grouped = df.groupby("tenure").agg(
+        churn_rate=("Churn_binary", "mean"),
+        total_customers=("Churn_binary", "size"),
+    )
 
+    tenure_grouped["retained_customers"] = round(
+        tenure_grouped["total_customers"] - (tenure_grouped["total_customers"] * tenure_grouped["churn_rate"])
+    ).astype(int)
 
+    return tenure_grouped
 
