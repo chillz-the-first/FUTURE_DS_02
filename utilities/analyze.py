@@ -72,6 +72,7 @@ def plot_churn_rate_by(churn_df, ax):
 
     ax.set_title(title)
     ax.set(xlabel=x_label, ylabel="Churn rate (%)")
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
 
     for index, row in data.iterrows():
         ax.text(index, row["churn_rate"] + 0.0001, f"{row['churn_rate']:.1%}"
@@ -80,6 +81,11 @@ def plot_churn_rate_by(churn_df, ax):
 def plot_contract_revenue_risk(contract, ax):
     data = contract.drop(columns=["customers", "churn_rate"]).reset_index()
     melted = data.melt(id_vars="Contract", var_name="Metric", value_name="Revenue")
+
+    melted["Metric"] = melted["Metric"].replace({
+        "total_revenue": "Total revenue",
+        "lost_revenue": "Lost revenue",
+    })
 
     sns.barplot(
         data=melted,
@@ -95,7 +101,7 @@ def plot_contract_revenue_risk(contract, ax):
     ax.set(xlabel="Contract", ylabel="Revenue")
 
     for container in ax.containers:
-        ax.bar_label(container, fmt="$%.0fK", fontsize=10, padding=3)
+        ax.bar_label(container, fmt="${:,.0f}", fontsize=10, padding=3)
 
 def plot_retention_curve(retention, ax):
     data = retention.drop(columns=["total_customers", "churn_rate"]).reset_index()
@@ -115,14 +121,15 @@ def plot_retention_curve(retention, ax):
     ax.set(xlabel="Tenure", ylabel="Retention rate")
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
 
-def get_dashboard(contract, retention, internet):
+def get_dashboard(contract, contract_risk, retention, internet):
     fig,axes = plt.subplots(nrows=2, ncols=2, figsize=(16, 12))
 
     plot_churn_rate_by(contract, axes[0, 0])
-    plot_contract_revenue_risk(contract, axes[0, 1])
+    plot_contract_revenue_risk(contract_risk, axes[0, 1])
     plot_retention_curve(retention, axes[1, 0])
     plot_churn_rate_by(internet, axes[1, 1])
 
     plt.tight_layout()
+    plt.savefig("../outputs/dashboard.png", dpi=150, bbox_inches="tight")
     plt.show()
 
