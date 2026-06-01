@@ -41,25 +41,6 @@ def report(df):
     print()
     df.info()
 
-def find_outliers(df, col):
-    """
-    Identify outliers in a numeric column using the IQR method.
-
-    An outlier is any value below Q1 - 1.5*IQR or above Q3 + 1.5*IQR.
-    Returns the subset of rows that are outliers (callers can decide what
-    to do with them) and prints mean/median/count for quick comparison.
-    """
-    Q1 = df[col].quantile(0.25)
-    Q3 = df[col].quantile(0.75)
-    IQR = Q3 - Q1
-
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)].reset_index(drop=True)
-
-    print(f"Mean: {df[col].mean()}")
-    print(f"Median: {df[col].median()}")
-    print(f"Outliers found: {len(outliers)}")
 
 def check_categories(df):
     """
@@ -77,47 +58,6 @@ def check_categories(df):
         print(f"Categories in {col}")
         print(df[col].value_counts())
         print()
-
-def standardize_text(df):
-    """
-    Strip whitespace and title-case the categorical text columns.
-
-    Returns the modified DataFrame. Only touches the allowlist defined in
-    CATEGORICAL_TEXT_COLS — IDs (Order ID, Product ID) and free-text fields
-    (Product Name) are left alone, since title-casing them would mangle
-    real formatting like 'VoIP' or 'CA-2016-152156'.
-    """
-    cols_to_clean = ["Region", "Ship Mode", "Category", "Segment", "Sub-Category"]
-
-    for col in cols_to_clean:
-        df[col] = df[col].str.strip().str.title()
-
-def clean_data(df):
-    """
-    Run the full cleaning pipeline on the Superstore DataFrame.
-
-    Order matters:
-    1. Standardise text first — so duplicates and groupbys see consistent values.
-    2. Drop duplicates — now reliable because text has been normalised.
-    3. Handle missing values — drop missing Sales (a measure we sum, so filling
-       would invent revenue); fill Postal Code with 'Unknown' (an identifier
-       we never do math on).
-    4. Parse dates last — the rest of the data is sound before we change types.
-
-    Returns the cleaned DataFrame.
-    """
-    standardize_text(df)
-
-    df = df.drop_duplicates().reset_index(drop=True)
-
-    # Handle missing values
-    df = df.dropna(subset=["Sales"]).reset_index(drop=True)
-    df["Postal Code"] = df["Postal Code"].fillna("Unknown")
-
-    df["Order Date"] = pd.to_datetime(df["Order Date"], format="mixed", dayfirst=False)
-    df["Ship Date"] = pd.to_datetime(df["Ship Date"], format="mixed", dayfirst=False)
-
-    return df
 
 
 
